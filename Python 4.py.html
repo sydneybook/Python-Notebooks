@@ -1,0 +1,202 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[4]:
+
+
+import pandas as pd
+import numpy as np
+import requests
+import json
+from google.colab import drive
+
+drive.mount('/content/drive')
+
+
+# In[5]:
+
+
+csvfile = 'drive/My Drive/Colab Notebooks/msas.csv'
+df = pd.read_csv(csvfile)
+df.head()
+
+
+# 1. Knowing we are going after organic customers, we should choose 50k to 79.5k, parameter 1. 
+# 2. Target range should be 18 to 34, parameter 2.
+# 3. we should look at areas with large hispanic populations, parameter 3
+
+# In[ ]:
+
+
+tableids = ['B19001', 'B01001', 'B03002']
+tableidsstring = ",".join(tableids)
+
+geoid = '31000US' + df['CBSA'].astype(str)
+df['geoid'] = geoid
+
+
+# In[ ]:
+
+
+geoidstring_part1 = ",".join(geoid[:int(len(geoid)/2)])
+requesturl1 = 'http://api.censusreporter.org/1.0/data/show/latest?table_ids=%s&geo_ids=%s' % (tableidsstring, geoidstring_part1)
+loadedjson1 = requests.get(requesturl1)
+parsedjson1 = json.loads(loadedjson1.text)
+
+
+# In[ ]:
+
+
+geoidstring_part2 = ",".join(geoid[int(len(geoid)/2):])
+requesturl2 = 'http://api.censusreporter.org/1.0/data/show/latest?table_ids=%s&geo_ids=%s' % (tableidsstring, geoidstring_part2)
+loadedjson2 = requests.get(requesturl2)
+parsedjson2 = json.loads(loadedjson2.text)
+
+
+# In[ ]:
+
+
+Everything = dict(parsedjson1['data'], **parsedjson2['data'])
+
+
+# In[ ]:
+
+
+HH_Income = []
+Pop_by_age = []
+Pop_by_Hispanic = []
+for i, row in df.iterrows():
+    Income = Everything[df['geoid'][i]]['B19001']['estimate']['B19001011'],
+    + Everything[df['geoid'][i]]['B19001']['estimate']['B19001012'] 
+    HH_Income.append(Income)
+    Pop = Everything[df['geoid'][i]]['B01001']['estimate']['B01001007']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001008']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001009']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001010']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001011']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001012']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001031']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001032']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001033']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001034']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001035']
+    + Everything[df['geoid'][i]]['B01001']['estimate']['B01001036']
+    Pop_by_age.append(Pop)
+    Hispanic = Everything[df['geoid'][i]]['B03002']['estimate']['B03002012']
+    Pop_by_Hispanic.append(Hispanic)
+
+df['Pop_by_Income'] = HH_Income
+df['Pop_by_Age'] = Pop_by_age
+df['Pop_by_Hispanic'] = Pop_by_Hispanic
+
+
+# In[12]:
+
+
+print(df.loc[df['Pop_by_Income'] == max(df['Pop_by_Income'])]['NAME'])
+
+
+# 1.Knowing that we are going after organic customers, we will be targeting 50k to $74.5k as parameter 1. This gives us a result for the city with the highest count of audience as new york- Newark -Jersey City, NY-NJ-PA
+
+# In[13]:
+
+
+print(df.loc[df['Pop_by_Age'] == max(df['Pop_by_Age'])]['NAME'])
+
+
+# 2. For parameter 2, I chose 19-34 as my range for tareting organic customers. New York-Newark-Jersey City, NY-NJ-PA has the nighest count of the audience.     
+
+# In[14]:
+
+
+print(df.loc[df['Pop_by_Hispanic'] == max(df['Pop_by_Hispanic'])]['NAME'])
+
+
+# 
+# 
+# ```
+# `# This is formatted as code`
+# ```
+# 
+# 3. For parameter 3, I chose hispanic populations. Los Angeles-Long Beach-Anaheim, CA had the highest count for this parameter. 
+
+# In[15]:
+
+
+HH_Income_Percentage = []
+Pop_by_age_Percentage = []
+Pop_by_Hispanic_Percentage = []
+for i, row in df.iterrows():
+    Percentage_Income = df['Pop_by_Income'][i]/max(df['Pop_by_Income'])
+    Percentage_Age = df['Pop_by_Age'][i]/max(max(df['Pop_by_Age']))
+    Percentage_Hispanic = df['Pop_by_Hispanic'][i]/max(df['Pop_by_Hispanic'])
+    HH_Income_Percentage.append(Percentage_Income)
+    Pop_by_age_Percentage.append(Percentage_Age)
+    Pop_by_Hispanic_Percentage.append(Percentage_Hispanic)
+
+df['HH_Income_Percentage'] = HH_Income_Percentage
+df['Pop_by_age_Percentage'] = Pop_by_age_Percentage
+df['Pop_by_Hispanic_Percentage'] = Pop_by_Hispanic_Percentage
+
+mean_percentage_score = []
+for i, row in df.iterrows():
+    Mean = (df['HH_Income_Percentage'][i] + df['Pop_by_age_Percentage'][i]+ df['Pop_by_Hispanic_Percentage'][i])/3
+    mean_percentage_score.append(Mean)
+df['mean_percentage_score'] = mean_percentage_score
+
+
+# In[ ]:
+
+
+dfRaw = pd.read_csv(csvfile)
+dfHH = pd.DataFrame(columns=['country', 'population'], index=list(range(1,len(geoid))))
+dfA = pd.DataFrame(columns=['location', 'population'], index=list(range(1,len(geoid))))
+dfH = pd.DataFrame(columns=['location', 'population'], index=list(range(1,len(geoid))))
+
+
+# In[ ]:
+
+
+HH_Income_Percentage = []
+Pop_by_age_Percentage = []
+Pop_by_Hispanic_Percentage = []
+for i, row in dfHH.iterrows():
+    Percentage_Income = dfHH['population'][i]/max(dfHH['population'])
+    Percentage_Age = dfA['population'][i]/max(dfA['population'])
+    Percentage_Hispanic = dfH['population'][i]/max(dfH['population'])
+    HH_Income_Percentage.append(Percentage_Income)
+    Pop_by_age_Percentage.append(Percentage_Age)
+    Pop_by_Hispanic_Percentage.append(Percentage_Hispanic)
+
+
+# In[ ]:
+
+
+dfHH['percentage'] = HH_Income_Percentage
+dfA['percentage'] = Pop_by_age_Percentage
+dfH['percentage'] = Pop_by_Hispanic_Percentage
+
+
+# In[ ]:
+
+
+Pmean = []
+for i, row in dfHH.iterrows():
+    Mean = (dfHH['percentage'][i] + dfA['percentage'][i]+ dfH['percentage'][i])/3
+    Pmean.append(Mean)
+dfHH['percentage mean'] = Pmean
+
+
+# In[20]:
+
+
+print(dfHH.loc[dfHH['percentage mean'] == max(dfHH['percentage mean'])])
+
+
+# In[21]:
+
+
+print(dfRaw.loc[dfRaw['CBSA'] == 35620])
+
+
+# Question 4. New York-Newark-jersey City, NY-NJ-PA has the highest mean percentage in all three categories. 
