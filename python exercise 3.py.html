@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[44]:
+
+
+import pandas as pd
+import pandas
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error 
+from sklearn.linear_model import LassoLarsCV
+import matplotlib.pyplot as plt
+from google.colab import drive
+
+drive.mount('/content/drive')
+
+
+# In[21]:
+
+
+csvfile = 'drive/My Drive/Colab Notebooks/finalmaster-ratios.csv'
+alldata = pd.read_csv(csvfile)
+alldata.head()
+
+
+# In[ ]:
+
+
+allvariablenames = list(alldata.columns.values)
+listofallpredictors= allvariablenames[9:]
+
+
+# In[29]:
+
+
+predictors = alldata[listofallpredictors]  
+target = alldata['# Purchases']   
+predictors
+target
+
+
+# In[ ]:
+
+
+pred_train, pred_test, tar_train, tar_test = train_test_split(predictors, target, test_size=.3, random_state=123)    
+
+
+# In[38]:
+
+
+model=LassoLarsCV(cv=10,precompute=False)
+model.fit(predictors,target)
+
+
+# In[39]:
+
+
+predictors_model=pd.DataFrame(listofallpredictors)
+predictors_model.columns = ['label']
+predictors_model['coeff'] = model.coef_
+
+for index, row in predictors_model.iterrows():
+    if row['coeff'] > 0:
+        print(row.values)
+
+
+# Question 1. The code above is running a four loop. First we define some variables. The first line of code is defining a variable predictors_model that creates a data frame of the predictor variables and coeficents. The second line is putting the predictors as in under'label'. The next line is putting coefs from the model in predictors_model['coeff'] column. Next is the for loop. The first line is saying for every row in predictor_model iterate through each row and do the following; if the coeff of that row is greater than 0 print the row and the value. Its printing the label and coefs that have a coef greater than 0. 
+
+# Question 2. In areas where there are more females over 25 with no diploma we sell more bobo bars. In areas with females aged 35 to 39 we sell more bobo bars. In aeas with females aged 40 to 44 we sell more. Areas with households that make $200000 or more are selling mroe bobo bars.Areas with women 30 to 34 sell more bobo bars. Areas with women 15 to 50 years old, who did not have a brith in the past 12 months, and never married or is widowed or divorced and has a graduate or professional degree we sell more bobo bars. Areas with more asians sell more bobo bars. Areas with males 40 to 44 sell more bobo bars. Areas with women who had a child in the last year and are 40 to 44 sell more bobos. Areas with women aged 15 to 50 who has a birth in the last year with a bachelors degree sell more bobo bars. Areas with people reporting other race sell more bobos. 
+
+# Questin 3. The top two best predictor variables for sales are women 25 year and over -12th grade, no diploma. The second varibles is females aged 35 to 39.
+
+# In[45]:
+
+
+train_error = mean_squared_error(tar_train, model.predict(pred_train))
+print ('training data MSE')
+print(train_error)
+
+
+# In[50]:
+
+
+test_error = mean_squared_error(tar_test, model.predict(pred_test))
+print ('test data MSE')
+print(test_error)
+
+
+# The training and test set mean standard errors are different, test data is higher than training data error. This means the test data seems to be further off from the actual data becasue it has a larger MSE. The training data is still off from the actual data but not as bad as the test data. This could indicate there is more vairability in the test data. 
+
+# In[51]:
+
+
+rsquared_train=model.score(pred_train,tar_train)
+print ('training data R-square')
+print(rsquared_train)
+
+
+# question 5. We can say that census data overall can help predict 27.7% of sales. The r- squared value measures the propotion of variance for a dependent variable explained by an independent variable. 
+
+# In[52]:
+
+
+print("y interecept:")
+print(model.intercept_)
+
+
+# the y intercept represents the sales when the predictors are 0. in this cases it would be the sales given no predictor variables or no information on the demogrphics or census.  
